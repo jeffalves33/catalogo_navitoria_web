@@ -10,18 +10,26 @@ const state = {
   cart: new Map(),
 };
 
-const productsGrid = document.querySelector("#productsGrid");
+const productsList = document.querySelector("#productsList");
 const statusEl = document.querySelector("#status");
 const categoryFilters = document.querySelector("#categoryFilters");
 const cartBar = document.querySelector("#cartBar");
 const cartCount = document.querySelector("#cartCount");
 const whatsappButton = document.querySelector("#whatsappButton");
+const productDialog = document.querySelector("#productDialog");
+const dialogContent = document.querySelector("#dialogContent");
+const closeDialog = document.querySelector("#closeDialog");
 
 whatsappButton.addEventListener("click", () => {
   const items = [...state.cart.values()];
   const lines = items.map((product) => `- ${product.name} (${product.category}) - ${formatMoney(product.price)}`);
   const message = encodeURIComponent(`Ola! Tenho interesse nos produtos:\n${lines.join("\n")}`);
   window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${message}`, "_blank", "noopener,noreferrer");
+});
+
+closeDialog.addEventListener("click", () => productDialog.close());
+productDialog.addEventListener("click", (event) => {
+  if (event.target === productDialog) productDialog.close();
 });
 
 loadProducts();
@@ -59,11 +67,6 @@ function render() {
 function renderCategories() {
   const categories = ["Todos", ...new Set(state.products.map((product) => product.category).filter(Boolean))];
 
-  if (categories.length <= 2) {
-    categoryFilters.innerHTML = "";
-    return;
-  }
-
   categoryFilters.innerHTML = categories.map((category) => `
     <button class="category-chip ${category === state.selectedCategory ? "is-active" : ""}" type="button" data-category="${escapeAttribute(category)}">
       ${escapeHtml(category)}
@@ -82,36 +85,44 @@ function renderProducts() {
   const products = getFilteredProducts();
 
   if (!products.length) {
-    productsGrid.innerHTML = "";
+    productsList.innerHTML = "";
     setStatus(state.products.length ? "Nenhum produto nessa categoria." : "Nenhum produto ativo no catalogo.");
     return;
   }
 
   setStatus("");
-  productsGrid.innerHTML = products.map((product) => {
+  productsList.innerHTML = products.map((product) => {
     const selected = state.cart.has(product.id);
 
     return `
-      <article class="product-card">
-        <div class="product-image">
+      <article class="product-row">
+        <button class="product-image" type="button" data-detail-id="${escapeAttribute(product.id)}" aria-label="Ver detalhes de ${escapeAttribute(product.name)}">
           ${product.image_url ? `<img src="${escapeAttribute(product.image_url)}" alt="${escapeAttribute(product.name)}" loading="lazy" />` : `<span class="image-placeholder">Sem imagem</span>`}
-        </div>
+        </button>
         <div class="product-content">
           <span class="product-category">${escapeHtml(product.category || "Geral")}</span>
           <h2 class="product-name">${escapeHtml(product.name)}</h2>
-          <div class="product-price">${formatMoney(product.price)}</div>
           ${product.description ? `<p class="product-description">${escapeHtml(product.description)}</p>` : ""}
-          <div class="card-spacer"></div>
-          <button class="interest-button ${selected ? "is-selected" : ""}" type="button" data-product-id="${escapeAttribute(product.id)}">
-            ${selected ? "Selecionado" : "Tenho interesse"}
-          </button>
+          <div class="product-meta">
+            <strong class="product-price">${formatMoney(product.price)}</strong>
+            <div class="row-actions">
+              <button class="details-button" type="button" data-detail-id="${escapeAttribute(product.id)}">Detalhes</button>
+              <button class="interest-button ${selected ? "is-selected" : ""}" type="button" data-product-id="${escapeAttribute(product.id)}">
+                ${selected ? "Ok" : "Quero"}
+              </button>
+            </div>
+          </div>
         </div>
       </article>
     `;
   }).join("");
 
-  productsGrid.querySelectorAll(".interest-button").forEach((button) => {
+  productsList.querySelectorAll(".interest-button").forEach((button) => {
     button.addEventListener("click", () => toggleCart(button.dataset.productId));
+  });
+
+  productsList.querySelectorAll("[data-detail-id]").forEach((button) => {
+    button.addEventListener("click", () => openDetails(button.dataset.detailId));
   });
 }
 
@@ -139,6 +150,37 @@ function toggleCart(productId) {
 
   renderProducts();
   renderCart();
+}
+
+function openDetails(productId) {
+  const product = state.products.find((item) => item.id === productId);
+  if (!product) return;
+
+  const features = Array.isArray(product.features) ? product.features.filter(Boolean) : [];
+  const selected = state.cart.has(product.id);
+
+  dialogContent.innerHTML = `
+    <div class="dialog-image">
+      ${product.image_url ? `<img src="${escapeAttribute(product.image_url)}" alt="${escapeAttribute(product.name)}" />` : `<span class="image-placeholder">Sem imagem</span>`}
+    </div>
+    <div class="dialog-body">
+      <span class="product-category">${escapeHtml(product.category || "Geral")}</span>
+      <h2>${escapeHtml(product.name)}</h2>
+      <div class="dialog-price">${formatMoney(product.price)}</div>
+      ${product.description ? `<p class="dialog-description">${escapeHtml(product.description)}</p>` : `<p class="dialog-description">Sem descricao cadastrada.</p>`}
+      ${features.length ? `<ul class="features">${features.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
+      <button class="interest-button ${selected ? "is-selected" : ""}" type="button" data-dialog-interest="${escapeAttribute(product.id)}">
+        ${selected ? "Remover da lista" : "Tenho interesse"}
+      </button>
+    </div>
+  `;
+
+  dialogContent.querySelector("[data-dialog-interest]").addEventListener("click", (event) => {
+    toggleCart(event.currentTarget.dataset.dialogInterest);
+    productDialog.close();
+  });
+
+  productDialog.showModal();
 }
 
 function setStatus(message) {

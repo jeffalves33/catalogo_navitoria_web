@@ -13,20 +13,24 @@
     <header class="site-header">
       <div class="header-inner">
         <img class="logo" src="assets/logo.jpg" alt="Na Vitoria" />
-        <p>Catalogo claro, versatil e atualizado.</p>
       </div>
     </header>
 
     <main class="page-shell">
       <nav id="categoryFilters" class="category-filters" aria-label="Categorias"></nav>
       <section id="status" class="status">Carregando catalogo...</section>
-      <section id="productsGrid" class="products-grid" aria-live="polite"></section>
+      <section id="productsList" class="products-list" aria-live="polite"></section>
     </main>
 
     <aside id="cartBar" class="cart-bar" hidden>
       <strong id="cartCount">0 selecionados</strong>
       <button id="whatsappButton" type="button">Solicitar</button>
     </aside>
+
+    <dialog id="productDialog" class="product-dialog">
+      <button id="closeDialog" class="dialog-close" type="button" aria-label="Fechar">x</button>
+      <div id="dialogContent"></div>
+    </dialog>
 
     <script src="app.js" defer></script>
   </body>
