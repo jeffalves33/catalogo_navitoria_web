@@ -7,22 +7,15 @@
 const state = {
   products: [],
   selectedCategory: "Todos",
-  search: "",
   cart: new Map(),
 };
 
 const productsGrid = document.querySelector("#productsGrid");
 const statusEl = document.querySelector("#status");
 const categoryFilters = document.querySelector("#categoryFilters");
-const searchInput = document.querySelector("#searchInput");
 const cartBar = document.querySelector("#cartBar");
 const cartCount = document.querySelector("#cartCount");
 const whatsappButton = document.querySelector("#whatsappButton");
-
-searchInput.addEventListener("input", (event) => {
-  state.search = event.target.value.trim().toLowerCase();
-  render();
-});
 
 whatsappButton.addEventListener("click", () => {
   const items = [...state.cart.values()];
@@ -53,7 +46,7 @@ async function loadProducts() {
     render();
   } catch (error) {
     console.error(error);
-    setStatus("Nao foi possivel carregar o catalogo. Verifique o Supabase e as politicas RLS.");
+    setStatus("Nao foi possivel carregar o catalogo.");
   }
 }
 
@@ -65,6 +58,12 @@ function render() {
 
 function renderCategories() {
   const categories = ["Todos", ...new Set(state.products.map((product) => product.category).filter(Boolean))];
+
+  if (categories.length <= 2) {
+    categoryFilters.innerHTML = "";
+    return;
+  }
+
   categoryFilters.innerHTML = categories.map((category) => `
     <button class="category-chip ${category === state.selectedCategory ? "is-active" : ""}" type="button" data-category="${escapeAttribute(category)}">
       ${escapeHtml(category)}
@@ -84,14 +83,13 @@ function renderProducts() {
 
   if (!products.length) {
     productsGrid.innerHTML = "";
-    setStatus(state.products.length ? "Nenhum produto encontrado." : "Nenhum produto ativo no catalogo.");
+    setStatus(state.products.length ? "Nenhum produto nessa categoria." : "Nenhum produto ativo no catalogo.");
     return;
   }
 
   setStatus("");
   productsGrid.innerHTML = products.map((product) => {
     const selected = state.cart.has(product.id);
-    const features = Array.isArray(product.features) ? product.features.slice(0, 4) : [];
 
     return `
       <article class="product-card">
@@ -103,7 +101,6 @@ function renderProducts() {
           <h2 class="product-name">${escapeHtml(product.name)}</h2>
           <div class="product-price">${formatMoney(product.price)}</div>
           ${product.description ? `<p class="product-description">${escapeHtml(product.description)}</p>` : ""}
-          ${features.length ? `<ul class="features">${features.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}
           <div class="card-spacer"></div>
           <button class="interest-button ${selected ? "is-selected" : ""}" type="button" data-product-id="${escapeAttribute(product.id)}">
             ${selected ? "Selecionado" : "Tenho interesse"}
@@ -121,14 +118,12 @@ function renderProducts() {
 function renderCart() {
   const total = state.cart.size;
   cartBar.hidden = total === 0;
-  cartCount.textContent = `${total} produto${total === 1 ? "" : "s"} selecionado${total === 1 ? "" : "s"}`;
+  cartCount.textContent = `${total} selecionado${total === 1 ? "" : "s"}`;
 }
 
 function getFilteredProducts() {
   return state.products.filter((product) => {
-    const matchesCategory = state.selectedCategory === "Todos" || product.category === state.selectedCategory;
-    const haystack = `${product.name || ""} ${product.category || ""} ${product.description || ""} ${(product.features || []).join(" ")}`.toLowerCase();
-    return matchesCategory && haystack.includes(state.search);
+    return state.selectedCategory === "Todos" || product.category === state.selectedCategory;
   });
 }
 
