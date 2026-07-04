@@ -1,0 +1,46 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111111" />
+    <meta name="description" content="Catalogo online Na Vitoria" />
+    <title>Na Vitoria</title>
+    <link rel="preconnect" href="https://szwkksgfelpxvdcqgaoh.supabase.co" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <img class="logo" src="assets/logo.jpg" alt="Na Vitoria" />
+        <div class="brand-copy">
+          <h1>Na Vitoria</h1>
+          <p>Catalogo claro, versatil e atualizado.</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="toolbar" aria-label="Busca e filtros">
+        <label class="search-box">
+          <span>Buscar</span>
+          <input id="searchInput" type="search" placeholder="Produto, categoria ou detalhe" autocomplete="off" />
+        </label>
+        <div id="categoryFilters" class="category-filters" aria-label="Categorias"></div>
+      </section>
+
+      <section id="status" class="status">Carregando catalogo...</section>
+      <section id="productsGrid" class="products-grid" aria-live="polite"></section>
+    </main>
+
+    <aside id="cartBar" class="cart-bar" hidden>
+      <div>
+        <strong id="cartCount">0 produtos selecionados</strong>
+        <span>Envie a lista pelo WhatsApp.</span>
+      </div>
+      <button id="whatsappButton" type="button">Solicitar</button>
+    </aside>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
